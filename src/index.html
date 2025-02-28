@@ -41,7 +41,7 @@
       });
     };
 
-    const guard = defineSessionGuard('test_session', mockFetch);
+    const guard = window.defineSessionGuard('test_session', mockFetch);
 
     // 操作函数
     function writeTestData() {
