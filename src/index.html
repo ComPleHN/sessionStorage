@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>SessionGuard 功能测试</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    .container { max-width: 800px; margin: 0 auto; }
+    .btn { margin: 5px; padding: 8px 15px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+    .btn:hover { background: #0056b3; }
+    .log { margin-top: 20px; padding: 15px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>SessionGuard 功能测试</h2>
+    
+    <div>
+      <button class="btn" onclick="writeTestData()">写入测试数据</button>
+      <button class="btn" onclick="getData()">获取数据</button>
+      <button class="btn" onclick="forceRefresh()">强制刷新</button>
+      <button class="btn" onclick="clearData()">清除数据</button>
+    </div>
+
+    <div class="log">
+      <h4>操作日志：</h4>
+      <div id="result"></div>
+      <hr>
+      <h4>SessionStorage 状态：</h4>
+      <pre id="storageState"></pre>
+    </div>
+  </div>
+
+  <script src="../src/sessionGuard.js"></script>
+  <script>
+    // 初始化守护实例
+    const mockFetch = () => {
+      return new Promise(resolve => {
+        const data = { timestamp: Date.now(), rand: Math.random() };
+        console.log('[MOCK] 发起网络请求', data);
+        setTimeout(() => resolve(data), 500);
+      });
+    };
+
+    const guard = defineSessionGuard('test_session', mockFetch);
+
+    // 操作函数
+    function writeTestData() {
+      guard.write({ test: 'user_test_data-username-password-email' });
+      updateDisplay('已写入测试数据');
+    }
+
+    async function getData() {
+      try {
+        const data = await guard.get();
+        updateDisplay(`获取成功：${JSON.stringify(data)}`);
+      } catch (error) {
+        updateDisplay(`获取失败：${error.message}`);
+      }
+    }
+
+    async function forceRefresh() {
+      sessionStorage.removeItem('__test_session_session__');
+      const data = await guard.get();
+      updateDisplay(`强制刷新结果：${JSON.stringify(data)}`);
+    }
+
+    function clearData() {
+      sessionStorage.clear();
+      updateDisplay('已清除所有数据');
+    }
+
+    // 显示更新
+    function updateDisplay(message) {
+      const resultDiv = document.getElementById('result');
+      resultDiv.innerHTML += `<div>[${new Date().toLocaleTimeString()}] ${message}</div>`;
+      
+      const storageState = document.getElementById('storageState');
+      storageState.textContent = JSON.stringify(sessionStorage, null, 2);
+    }
+
+    // 定时更新存储状态
+    setInterval(() => {
+      document.getElementById('storageState').textContent = 
+        JSON.stringify(sessionStorage, null, 2);
+    }, 500);
+  </script>
+</body>
+</html>
